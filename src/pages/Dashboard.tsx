@@ -19,7 +19,12 @@ const Dashboard: React.FC = () => {
     setProjects(p);
     setRecords(r);
     setLoading(false);
-  }, []);
+    
+    // 初回読み込み時、もし記録があれば最新の現場IDをセットする
+    if (r.length > 0 && !selectedProjectId) {
+      setSelectedProjectId(r[0].projectId.toString());
+    }
+  }, [selectedProjectId]);
 
   useEffect(() => {
     void fetchData();
@@ -32,9 +37,9 @@ const Dashboard: React.FC = () => {
       if (existingRecord) {
         setSelectedProjectId(existingRecord.projectId.toString());
         setSummary(existingRecord.summary);
-        // 編集モードではないが、既存データがあることを示すためにあえてセットする
       } else {
-        // 既存記録がない場合は、備考のみクリア（現場は継続の可能性があるため残す選択もありですが、一旦クリアします）
+        // 既存記録がない場合は、備考のみクリア
+        // 現場(projectId)は「最新の現場」を維持したいためクリアしない
         setSummary('');
       }
     }
