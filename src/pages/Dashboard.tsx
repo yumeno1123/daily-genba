@@ -25,6 +25,21 @@ const Dashboard: React.FC = () => {
     void fetchData();
   }, [fetchData]);
 
+  // 日付や人物名が変わったときに、既存の記録があれば自動でセットする
+  useEffect(() => {
+    if (!loading && personName && date && editingId === null) {
+      const existingRecord = records.find(r => r.date === date && r.personName === personName);
+      if (existingRecord) {
+        setSelectedProjectId(existingRecord.projectId.toString());
+        setSummary(existingRecord.summary);
+        // 編集モードではないが、既存データがあることを示すためにあえてセットする
+      } else {
+        // 既存記録がない場合は、備考のみクリア（現場は継続の可能性があるため残す選択もありですが、一旦クリアします）
+        setSummary('');
+      }
+    }
+  }, [date, personName, records, loading, editingId]);
+
   const handleSubmit = async (e: React.BaseSyntheticEvent) => {
     e.preventDefault();
     if (!personName || !selectedProjectId) {
@@ -136,7 +151,7 @@ const Dashboard: React.FC = () => {
   return (
     <div className="container">
       <header>
-        <h1>デイリー現場</h1>
+        <h1>日報記録アプリ</h1>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <select 
             value={selectedMonth} 
