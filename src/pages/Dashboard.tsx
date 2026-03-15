@@ -118,9 +118,17 @@ const Dashboard: React.FC = () => {
     const blob = new Blob(['\uFEFF' + header + csv], { type: 'text/csv; charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
+    a.style.display = 'none';
     a.href = url;
     a.download = `daily_report_${selectedMonth}.csv`;
+    document.body.appendChild(a);
     a.click();
+    
+    // iOS等で確実に動作させるため、少し遅らせてからDOM削除とメモリ解放を行う
+    setTimeout(() => {
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    }, 100);
   };
 
   if (loading) return <div className="container">読み込み中...</div>;
