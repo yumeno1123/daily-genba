@@ -66,7 +66,6 @@ const Dashboard: React.FC = () => {
               projectId: parseInt(selectedProjectId),
               summary
             });
-            alert('既存の記録を上書き更新しました');
             setSummary('');
             void fetchData();
           }
@@ -85,7 +84,6 @@ const Dashboard: React.FC = () => {
         summary
       });
       setEditingId(null);
-      alert('更新しました');
     } else {
       await db.addDailyRecord({
         personName,
@@ -93,7 +91,6 @@ const Dashboard: React.FC = () => {
         projectId: parseInt(selectedProjectId),
         summary
       });
-      alert('記録しました');
     }
 
     setSummary('');
@@ -157,11 +154,11 @@ const Dashboard: React.FC = () => {
     <div className="container">
       <header>
         <h1>日報記録アプリ</h1>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
           <select 
             value={selectedMonth} 
             onChange={(e) => { setSelectedMonth(e.target.value); }}
-            style={{ padding: '4px', fontSize: '0.8rem', width: 'auto' }}
+            style={{ padding: '8px', fontSize: '0.9rem', width: 'auto' }}
           >
             {Array.from(new Set(records.map(r => r.date.slice(0, 7)))).sort().reverse().map(m => (
               <option key={m} value={m}>{m.replace('-', '年') + '月'}</option>
@@ -170,8 +167,8 @@ const Dashboard: React.FC = () => {
               <option value={new Date().toISOString().slice(0, 7)}>{new Date().toISOString().slice(0, 7).replace('-', '年') + '月'}</option>
             )}
           </select>
-          <button onClick={() => { void navigate('/projects'); }} className="btn btn-info" style={{ fontSize: '0.8rem', padding: '8px 12px' }}>現場設定</button>
-          <button onClick={() => { handleExport(); }} className="btn btn-success" style={{ fontSize: '0.8rem', padding: '8px 12px' }}>CSV出力</button>
+          <button onClick={() => { void navigate('/projects'); }} className="btn btn-info" style={{ fontSize: '0.85rem', padding: '8px 12px' }}>現場設定</button>
+          <button onClick={() => { handleExport(); }} className="btn btn-success" style={{ fontSize: '0.85rem', padding: '8px 12px' }}>CSV出力</button>
         </div>
       </header>
 
@@ -196,7 +193,7 @@ const Dashboard: React.FC = () => {
               <label>今日の現場</label>
               <select value={selectedProjectId} onChange={(e) => { setSelectedProjectId(e.target.value); }}>
                 <option value="">選択してください</option>
-                {projects.map(p => <option key={p.id} value={p.id?.toString()}>{p.name}</option>)}
+                {projects.filter(p => !p.isDeleted).map(p => <option key={p.id} value={p.id?.toString()}>{p.name}</option>)}
               </select>
             </div>
             <div className="form-group">
@@ -205,41 +202,43 @@ const Dashboard: React.FC = () => {
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
               {editingId !== null && (
-                <button type="button" onClick={() => { cancelEdit(); }} className="btn btn-secondary" style={{ flex: 1 }}>キャンセル</button>
+                <button type="button" onClick={() => { cancelEdit(); }} className="btn btn-secondary" style={{ flex: 1 }}>中止</button>
               )}
               <button type="submit" className="btn btn-primary" style={{ flex: 2 }}>
-                {editingId !== null ? '更新を保存する' : '記録を保存'}
+                {editingId !== null ? '更新を保存' : '記録を保存'}
               </button>
             </div>
           </form>
         </div>
 
-        <h2>最近の記録</h2>
-        {records.length === 0 ? <p>記録がありません</p> : (
-          <div className="card" style={{ padding: '0', overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+        <h2>{selectedMonth.replace('-', '年')}月の記録</h2>
+        {records.filter(r => r.date.startsWith(selectedMonth)).length === 0 ? <p>記録がありません</p> : (
+          <div className="card" style={{ padding: '0', overflowX: 'hidden' }}>
+            <table className="mobile-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
               <thead>
                 <tr style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
-                  <th style={{ padding: '10px', textAlign: 'left' }}>日付</th>
-                  <th style={{ padding: '10px', textAlign: 'left' }}>人物</th>
-                  <th style={{ padding: '10px', textAlign: 'left' }}>現場名</th>
-                  <th style={{ padding: '10px', textAlign: 'left' }}>操作</th>
+                  <th style={{ padding: '12px', textAlign: 'left' }}>日付</th>
+                  <th style={{ padding: '12px', textAlign: 'left' }}>人物</th>
+                  <th style={{ padding: '12px', textAlign: 'left' }}>現場名</th>
+                  <th style={{ padding: '12px', textAlign: 'left' }}>操作</th>
                 </tr>
               </thead>
               <tbody>
-                {records.map(r => (
+                {records.filter(r => r.date.startsWith(selectedMonth)).map(r => (
                   <tr key={r.id} style={{ borderBottom: '1px solid #eee' }}>
-                    <td style={{ padding: '10px', whiteSpace: 'nowrap' }}>{r.date}</td>
-                    <td style={{ padding: '10px', whiteSpace: 'nowrap' }}>{r.personName}</td>
-                    <td style={{ padding: '10px' }}>{r.project?.name ?? '(不明)'}</td>
-                    <td style={{ padding: '10px', whiteSpace: 'nowrap' }}>
-                      <button onClick={() => { handleEdit(r); }} className="btn btn-info" style={{ padding: '4px 8px', fontSize: '0.7rem', marginRight: '5px' }}>修正</button>
-                      <button onClick={() => { 
-                        const targetId = r.id;
-                        if (targetId !== undefined) {
-                          void handleDelete(targetId);
-                        }
-                      }} className="btn btn-danger" style={{ padding: '4px 8px', fontSize: '0.7rem' }}>削除</button>
+                    <td data-label="日付" style={{ padding: '12px' }}>{r.date}</td>
+                    <td data-label="人物" style={{ padding: '12px' }}>{r.personName}</td>
+                    <td data-label="現場名" style={{ padding: '12px' }}>{r.project?.name ?? '(不明)'}</td>
+                    <td data-label="操作" style={{ padding: '12px' }}>
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                        <button onClick={() => { handleEdit(r); }} className="btn btn-info" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>修正</button>
+                        <button onClick={() => { 
+                          const targetId = r.id;
+                          if (targetId !== undefined) {
+                            void handleDelete(targetId);
+                          }
+                        }} className="btn btn-danger" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>削除</button>
+                      </div>
                     </td>
                   </tr>
                 ))}

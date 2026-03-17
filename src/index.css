@@ -1,61 +1,127 @@
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
+  font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+  line-height: 1.6;
   font-weight: 400;
   color-scheme: light dark;
-  color: #213547;
+  color: #333;
   background-color: #f0f2f5;
 }
 
-body { margin: 0; min-width: 320px; min-height: 100vh; }
+@media (prefers-color-scheme: dark) {
+  :root {
+    color: #e0e0e0;
+    background-color: #1a1a1a;
+  }
+}
+
+body { 
+  margin: 0; 
+  min-width: 320px; 
+  min-height: 100vh; 
+  -webkit-tap-highlight-color: transparent;
+}
 
 .container {
   max-width: 600px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 16px;
 }
 
 header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
 }
 
-h1 { font-size: 1.5rem; color: #007bff; margin: 0; }
+@media (min-width: 480px) {
+  header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+h1 { 
+  font-size: 1.4rem; 
+  color: #007bff; 
+  margin: 0; 
+}
+
+@media (prefers-color-scheme: dark) {
+  h1 { color: #4dabff; }
+}
 
 .card {
   background: white;
   border-radius: 12px;
-  padding: 20px;
+  padding: 16px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
-.form-group { margin-bottom: 15px; }
-label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; }
+@media (prefers-color-scheme: dark) {
+  .card {
+    background: #2d2d2d;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+}
+
+.form-group { margin-bottom: 16px; }
+label { 
+  display: block; 
+  margin-bottom: 8px; 
+  font-weight: bold; 
+  font-size: 0.95rem; 
+}
 
 input, select, textarea {
   width: 100%;
   padding: 12px;
-  border: 1px solid #ddd;
+  border: 1px solid #ccc;
   border-radius: 8px;
   font-size: 1rem;
   box-sizing: border-box;
+  background-color: white;
+  color: #333;
+  appearance: none; /* iOSでのデフォルトスタイルをリセット */
+}
+
+@media (prefers-color-scheme: dark) {
+  input, select, textarea {
+    background-color: #3d3d3d;
+    border-color: #555;
+    color: #e0e0e0;
+  }
+}
+
+/* セレクトボックスに矢印を追加（appearance: none用） */
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
 }
 
 .btn {
-  padding: 12px 20px;
+  padding: 14px 20px; /* タッチしやすいように少し大きく */
   border: none;
   border-radius: 8px;
   font-weight: bold;
   cursor: pointer;
-  transition: opacity 0.2s;
-  display: inline-block;
+  transition: opacity 0.2s, transform 0.1s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
+  font-size: 1rem;
+  touch-action: manipulation;
 }
 
-.btn:active { opacity: 0.7; }
+.btn:active { 
+  opacity: 0.8;
+  transform: scale(0.98);
+}
 
 .btn-primary { background-color: #007bff; color: white; }
 .btn-success { background-color: #28a745; color: white; }
@@ -63,8 +129,39 @@ input, select, textarea {
 .btn-danger { background-color: #dc3545; color: white; }
 .btn-secondary { background-color: #6c757d; color: white; }
 
-.record-item {
-  border-bottom: 1px solid #eee;
-  padding: 10px 0;
+/* テーブルをモバイルでカードにするためのスタイル */
+.mobile-table {
+  width: 100%;
+  border-collapse: collapse;
 }
-.record-item:last-child { border-bottom: none; }
+
+@media (max-width: 500px) {
+  .mobile-table thead { display: none; }
+  .mobile-table tr {
+    display: block;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    padding: 12px;
+    background: #fff;
+  }
+  @media (prefers-color-scheme: dark) {
+    .mobile-table tr {
+      background: #2d2d2d;
+      border-color: #444;
+    }
+  }
+  .mobile-table td {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border: none;
+    text-align: right;
+  }
+  .mobile-table td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    margin-right: 12px;
+    text-align: left;
+  }
+}

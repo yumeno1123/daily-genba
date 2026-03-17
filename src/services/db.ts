@@ -9,6 +9,7 @@ export interface Project {
   location: string;
   status: string;
   createdAt: string;
+  isDeleted?: boolean;
 }
 
 export interface DailyRecord {
@@ -54,7 +55,9 @@ export const updateProject = async (id: number, data: Partial<Project>): Promise
 
 export const deleteProject = async (id: number): Promise<void> => {
   const db = await initDB();
-  await db.delete('projects', id);
+  const project = await db.get('projects', id) as Project | undefined;
+  if (!project) return;
+  await db.put('projects', { ...project, isDeleted: true });
 };
 
 // 日報操作
