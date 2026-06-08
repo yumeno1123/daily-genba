@@ -76,6 +76,7 @@ const Dashboard: React.FC = () => {
       }
     }
 
+    let isNewRecord = false;
     if (editingId !== null) {
       await db.updateDailyRecord(editingId, {
         personName,
@@ -91,10 +92,14 @@ const Dashboard: React.FC = () => {
         projectId: parseInt(selectedProjectId),
         summary
       });
+      isNewRecord = true;
     }
 
     setSummary('');
     void fetchData();
+    if (isNewRecord) {
+      changeDay(1);
+    }
   };
 
   const handleEdit = (r: db.DailyRecord) => {
@@ -229,7 +234,7 @@ const Dashboard: React.FC = () => {
                   className="btn btn-secondary" 
                   style={{ padding: '8px 12px', fontSize: '0.9rem', width: 'auto' }}
                 >
-                  -1日
+                  ◀
                 </button>
                 <button 
                   type="button" 
@@ -237,7 +242,7 @@ const Dashboard: React.FC = () => {
                   className="btn btn-secondary" 
                   style={{ padding: '8px 12px', fontSize: '0.9rem', width: 'auto' }}
                 >
-                  +1日
+                  ▶
                 </button>
               </div>
             </div>
