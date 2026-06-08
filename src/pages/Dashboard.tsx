@@ -6,6 +6,10 @@ const Dashboard: React.FC = () => {
   const [projects, setProjects] = useState<db.Project[]>([]);
   const [records, setRecords] = useState<db.DailyRecord[]>([]);
   const [personName, setPersonName] = useState(localStorage.getItem('personName') ?? '');
+  // 人物名がすでに保存されている場合は、初期状態でスマート表示（編集モードをオフ）にする
+  const [isEditingPerson, setIsEditingPerson] = useState(!personName);
+  // 備考・連絡事項の折りたたみ状態（初期状態は閉じた状態）
+  const [isSummaryOpen, setIsSummaryOpen] = useState(false);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedProjectId, setSelectedProjectId] = useState('');
   const [summary, setSummary] = useState('');
@@ -44,6 +48,13 @@ const Dashboard: React.FC = () => {
       }
     }
   }, [date, personName, records, loading, editingId]);
+
+  // 備考に内容が入った場合は、自動的に折りたたみを展開する
+  useEffect(() => {
+    if (summary) {
+      setIsSummaryOpen(true);
+    }
+  }, [summary]);
 
   const handleSubmit = async (e: React.BaseSyntheticEvent) => {
     e.preventDefault();
@@ -96,6 +107,8 @@ const Dashboard: React.FC = () => {
     }
 
     setSummary('');
+    setIsSummaryOpen(false); // 備考欄を折りたたむ
+    setIsEditingPerson(false); // 人物名の編集モードを終了してスマート表示に戻す
     void fetchData();
     if (isNewRecord) {
       changeDay(1);
@@ -110,6 +123,7 @@ const Dashboard: React.FC = () => {
       setDate(r.date);
       setSelectedProjectId(r.projectId.toString());
       setSummary(r.summary);
+      setIsEditingPerson(false); // 編集開始時は人物名はコンパクト表示にしておく
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -122,6 +136,7 @@ const Dashboard: React.FC = () => {
   const cancelEdit = () => {
     setEditingId(null);
     setSummary('');
+    setIsSummaryOpen(false); // 備考欄を折りたたむ
   };
 
   const changeDay = (amount: number) => {
@@ -208,26 +223,61 @@ const Dashboard: React.FC = () => {
 
       <main>
         <div className="card" style={{ border: editingId !== null ? '2px solid #17a2b8' : 'none' }}>
-          <h2>{editingId !== null ? '記録を修正する' : '今日の情報を記録する'}</h2>
+          {editingId !== null && <h2>記録を修正する</h2>}
           <form onSubmit={(e) => { void handleSubmit(e); }}>
             <div className="form-group">
               <label>人物名</label>
-              <input 
-                type="text" 
-                value={personName} 
-                onChange={(e) => { setPersonName(e.target.value); }} 
-                placeholder="あなたの名前"
-              />
+              {!isEditingPerson ? (
+                <div className="person-badge">
+                  <span style={{ fontWeight: 'bold' }}>{personName || '未設定'}</span>
+                  <button 
+                    type="button" 
+                    onClick={() => { setIsEditingPerson(true); }} 
+                    className="btn btn-secondary" 
+                    style={{ padding: '6px 12px', fontSize: '0.8rem', width: 'auto' }}
+                  >
+                    変更
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input 
+                    type="text" 
+                    value={personName} 
+                    onChange={(e) => { setPersonName(e.target.value); }} 
+                    placeholder="あなたの名前"
+                    style={{ flex: 1 }}
+                  />
+                  {localStorage.getItem('personName') && (
+                    <button 
+                      type="button" 
+                      onClick={() => { setIsEditingPerson(false); }} 
+                      className="btn btn-secondary" 
+                      style={{ padding: '8px 12px', fontSize: '0.9rem', width: 'auto' }}
+                    >
+                      確定
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
             <div className="form-group">
               <label>日付</label>
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 <input 
                   type="date" 
                   value={date} 
                   onChange={(e) => { setDate(e.target.value); }} 
-                  style={{ flex: 1 }}
+                  style={{ flex: 1, minWidth: '120px' }}
                 />
+                <button 
+                  type="button" 
+                  onClick={() => { setDate(new Date().toISOString().split('T')[0]); }} 
+                  className="btn btn-secondary" 
+                  style={{ padding: '8px 12px', fontSize: '0.9rem', width: 'auto' }}
+                >
+                  今日
+                </button>
                 <button 
                   type="button" 
                   onClick={() => { changeDay(-1); }} 
@@ -254,8 +304,31 @@ const Dashboard: React.FC = () => {
               </select>
             </div>
             <div className="form-group">
-              <label>備考・連絡事項</label>
-              <textarea value={summary} onChange={(e) => { setSummary(e.target.value); }} rows={3} placeholder="特記事項があれば入力" />
+              <div 
+                onClick={() => { setIsSummaryOpen(!isSummaryOpen); }} 
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between', 
+                  cursor: 'pointer',
+                  padding: '6px 0',
+                  userSelect: 'none'
+                }}
+              >
+                <label style={{ margin: 0, cursor: 'pointer' }}>備考・連絡事項</label>
+                <span style={{ fontSize: '0.85rem', color: '#007bff', fontWeight: 'bold' }}>
+                  {isSummaryOpen ? '▲ 折りたたむ' : '▼ 入力する（折りたたみ中）'}
+                </span>
+              </div>
+              {isSummaryOpen && (
+                <textarea 
+                  value={summary} 
+                  onChange={(e) => { setSummary(e.target.value); }} 
+                  rows={3} 
+                  placeholder="特記事項があれば入力" 
+                  style={{ marginTop: '8px' }}
+                />
+              )}
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
               {editingId !== null && (

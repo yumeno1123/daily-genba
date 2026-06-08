@@ -165,3 +165,68 @@ select {
     text-align: left;
   }
 }
+
+/* 人物名スマート表示用のバッジスタイル */
+.person-badge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+@media (prefers-color-scheme: dark) {
+  .person-badge {
+    background-color: #2d2d2d;
+    border-color: #444;
+  }
+}
+
+/* スマホ表示（幅480px以下）時の余白縮小スタイル */
+@media (max-width: 480px) {
+  .container {
+    padding: 8px;
+  }
+  
+  header {
+    margin-bottom: 16px;
+    gap: 8px;
+  }
+  
+  h1 {
+    font-size: 1.25rem;
+  }
+
+  .card {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+
+  .form-group {
+    margin-bottom: 12px;
+  }
+
+  label {
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+  }
+
+  input, select, textarea {
+    padding: 10px;
+    font-size: 0.95rem;
+  }
+
+  .btn {
+    padding: 10px 16px;
+    font-size: 0.95rem;
+  }
+  
+  /* テーブル内ボタンのサイズ調整 */
+  .mobile-table td .btn {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+}
+
