@@ -5,7 +5,6 @@ import * as db from '../services/db';
 const ProjectList: React.FC = () => {
   const [projects, setProjects] = useState<db.Project[]>([]);
   const [name, setName] = useState('');
-  const [location, setLocation] = useState('');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -28,14 +27,13 @@ const ProjectList: React.FC = () => {
     }
 
     if (editingId !== null) {
-      await db.updateProject(editingId, { name, location });
+      await db.updateProject(editingId, { name });
       setEditingId(null);
     } else {
-      await db.addProject({ name, location, status: '進行中' });
+      await db.addProject({ name, status: '進行中' });
     }
 
     setName('');
-    setLocation('');
     void fetchProjects();
   };
 
@@ -44,7 +42,6 @@ const ProjectList: React.FC = () => {
     if (targetId !== undefined) {
       setEditingId(targetId);
       setName(p.name);
-      setLocation(p.location);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -58,7 +55,6 @@ const ProjectList: React.FC = () => {
   const cancelEdit = () => {
     setEditingId(null);
     setName('');
-    setLocation('');
   };
 
   if (loading) return <div className="container">読み込み中...</div>;
@@ -78,10 +74,6 @@ const ProjectList: React.FC = () => {
               <label>現場名 *</label>
               <input type="text" value={name} onChange={(e) => { setName(e.target.value); }} placeholder="例：港区改修工事" />
             </div>
-            <div className="form-group">
-              <label>場所</label>
-              <input type="text" value={location} onChange={(e) => { setLocation(e.target.value); }} placeholder="例：東京都港区..." />
-            </div>
             <div style={{ display: 'flex', gap: '10px' }}>
               {editingId !== null && (
                 <button type="button" onClick={() => { cancelEdit(); }} className="btn btn-secondary" style={{ flex: 1 }}>中止</button>
@@ -100,7 +92,6 @@ const ProjectList: React.FC = () => {
               <thead>
                 <tr style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
                   <th style={{ padding: '12px', textAlign: 'left' }}>現場名</th>
-                  <th style={{ padding: '12px', textAlign: 'left' }}>場所</th>
                   <th style={{ padding: '12px', textAlign: 'left' }}>操作</th>
                 </tr>
               </thead>
@@ -108,7 +99,6 @@ const ProjectList: React.FC = () => {
                 {projects.filter(p => !p.isDeleted).map(p => (
                   <tr key={p.id} style={{ borderBottom: '1px solid #eee' }}>
                     <td data-label="現場名" style={{ padding: '12px', fontWeight: 'bold' }}>{p.name}</td>
-                    <td data-label="場所" style={{ padding: '12px' }}>{p.location || '-'}</td>
                     <td data-label="操作" style={{ padding: '12px' }}>
                       <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                         <button onClick={() => { handleEdit(p); }} className="btn btn-info" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>修正</button>

@@ -8,6 +8,8 @@ const Dashboard: React.FC = () => {
   const [personName, setPersonName] = useState(localStorage.getItem('personName') ?? '');
   // 人物名がすでに保存されている場合は、初期状態でスマート表示（編集モードをオフ）にする
   const [isEditingPerson, setIsEditingPerson] = useState(!personName);
+  // 人物名セクションの折りたたみ状態（名前がない場合は最初から開く）
+  const [isPersonOpen, setIsPersonOpen] = useState(!personName);
   // 備考・連絡事項の折りたたみ状態（初期状態は閉じた状態）
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -16,6 +18,8 @@ const Dashboard: React.FC = () => {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
+  // 記録一覧で展開されているレコードのID
+  const [expandedRecordId, setExpandedRecordId] = useState<number | null>(null);
   const navigate = useNavigate();
 
   const fetchData = useCallback(async () => {
@@ -109,6 +113,7 @@ const Dashboard: React.FC = () => {
     setSummary('');
     setIsSummaryOpen(false); // 備考欄を折りたたむ
     setIsEditingPerson(false); // 人物名の編集モードを終了してスマート表示に戻す
+    setIsPersonOpen(false); // 保存完了時に人物名入力欄を折りたたむ
     void fetchData();
     if (isNewRecord) {
       changeDay(1);
@@ -124,6 +129,7 @@ const Dashboard: React.FC = () => {
       setSelectedProjectId(r.projectId.toString());
       setSummary(r.summary);
       setIsEditingPerson(false); // 編集開始時は人物名はコンパクト表示にしておく
+      setIsPersonOpen(false); // 編集開始時は人物名入力欄を折りたたんだ状態にする
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -148,6 +154,31 @@ const Dashboard: React.FC = () => {
     const m = String(currentDate.getMonth() + 1).padStart(2, '0');
     const d = String(currentDate.getDate()).padStart(2, '0');
     setDate(`${y}-${m}-${d}`);
+  };
+
+  // 登録済みの最新日報の日付の翌日を取得する関数
+  const getNextDayOfLatestRecord = (): string | null => {
+    if (records.length === 0) return null;
+    // 全記録から最も新しい日付を取得する
+    const latestDateStr = records.reduce((latest, r) => r.date > latest ? r.date : latest, records[0].date);
+    
+    // その日付の翌日を計算する
+    const [year, month, day] = latestDateStr.split('-').map(Number);
+    const dateObj = new Date(year, month - 1, day);
+    dateObj.setDate(dateObj.getDate() + 1);
+    
+    const y = dateObj.getFullYear();
+    const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const d = String(dateObj.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
+
+  // 登録済みの最新日報の翌日を選択する処理
+  const handleSelectNextOfLatest = () => {
+    const nextDay = getNextDayOfLatestRecord();
+    if (nextDay) {
+      setDate(nextDay);
+    }
   };
 
   const handleExport = () => {
@@ -226,37 +257,62 @@ const Dashboard: React.FC = () => {
           {editingId !== null && <h2>記録を修正する</h2>}
           <form onSubmit={(e) => { void handleSubmit(e); }}>
             <div className="form-group">
-              <label>人物名</label>
-              {!isEditingPerson ? (
-                <div className="person-badge">
-                  <span style={{ fontWeight: 'bold' }}>{personName || '未設定'}</span>
-                  <button 
-                    type="button" 
-                    onClick={() => { setIsEditingPerson(true); }} 
-                    className="btn btn-secondary" 
-                    style={{ padding: '6px 12px', fontSize: '0.8rem', width: 'auto' }}
-                  >
-                    変更
-                  </button>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <input 
-                    type="text" 
-                    value={personName} 
-                    onChange={(e) => { setPersonName(e.target.value); }} 
-                    placeholder="あなたの名前"
-                    style={{ flex: 1 }}
-                  />
-                  {localStorage.getItem('personName') && (
-                    <button 
-                      type="button" 
-                      onClick={() => { setIsEditingPerson(false); }} 
-                      className="btn btn-secondary" 
-                      style={{ padding: '8px 12px', fontSize: '0.9rem', width: 'auto' }}
-                    >
-                      確定
-                    </button>
+              {/* 人物名セクションの折りたたみヘッダー */}
+              <div 
+                onClick={() => { setIsPersonOpen(!isPersonOpen); }} 
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between', 
+                  cursor: 'pointer',
+                  padding: '6px 0',
+                  userSelect: 'none'
+                }}
+              >
+                <label style={{ margin: 0, cursor: 'pointer' }}>
+                  人物名 {personName && <span style={{ fontWeight: 'normal', fontSize: '0.9rem', color: '#666', marginLeft: '8px' }}>({personName})</span>}
+                </label>
+                <span style={{ fontSize: '0.85rem', color: '#007bff', fontWeight: 'bold' }}>
+                  {isPersonOpen ? '▲ 折りたたむ' : '▼ 変更する（折りたたみ中）'}
+                </span>
+              </div>
+              {isPersonOpen && (
+                <div style={{ marginTop: '8px' }}>
+                  {!isEditingPerson ? (
+                    <div className="person-badge">
+                      <span style={{ fontWeight: 'bold' }}>{personName || '未設定'}</span>
+                      <button 
+                        type="button" 
+                        onClick={() => { setIsEditingPerson(true); }} 
+                        className="btn btn-secondary" 
+                        style={{ padding: '6px 12px', fontSize: '0.8rem', width: 'auto' }}
+                      >
+                        変更
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input 
+                        type="text" 
+                        value={personName} 
+                        onChange={(e) => { setPersonName(e.target.value); }} 
+                        placeholder="あなたの名前"
+                        style={{ flex: 1 }}
+                      />
+                      {localStorage.getItem('personName') && (
+                        <button 
+                          type="button" 
+                          onClick={() => { 
+                            setIsEditingPerson(false); 
+                            setIsPersonOpen(false); // 確定した際に人物名入力欄を自動的に折りたたむ
+                          }} 
+                          className="btn btn-secondary" 
+                          style={{ padding: '8px 12px', fontSize: '0.9rem', width: 'auto' }}
+                        >
+                          確定
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
@@ -272,11 +328,19 @@ const Dashboard: React.FC = () => {
                 />
                 <button 
                   type="button" 
-                  onClick={() => { setDate(new Date().toISOString().split('T')[0]); }} 
+                  onClick={handleSelectNextOfLatest} 
+                  disabled={records.length === 0}
                   className="btn btn-secondary" 
-                  style={{ padding: '8px 12px', fontSize: '0.9rem', width: 'auto' }}
+                  style={{ 
+                    padding: '8px 12px', 
+                    fontSize: '0.9rem', 
+                    width: 'auto',
+                    opacity: records.length === 0 ? 0.5 : 1,
+                    cursor: records.length === 0 ? 'not-allowed' : 'pointer'
+                  }}
+                  title={records.length === 0 ? "記録がまだありません" : "記入されている最新の日付の翌日を選択します"}
                 >
-                  今日
+                  最終翌日
                 </button>
                 <button 
                   type="button" 
@@ -343,37 +407,116 @@ const Dashboard: React.FC = () => {
 
         <h2>{selectedMonth.replace('-', '年')}月の記録</h2>
         {records.filter(r => r.date.startsWith(selectedMonth)).length === 0 ? <p>記録がありません</p> : (
-          <div className="card" style={{ padding: '0', overflowX: 'hidden' }}>
-            <table className="mobile-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-              <thead>
-                <tr style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
-                  <th style={{ padding: '12px', textAlign: 'left' }}>日付</th>
-                  <th style={{ padding: '12px', textAlign: 'left' }}>人物</th>
-                  <th style={{ padding: '12px', textAlign: 'left' }}>現場名</th>
-                  <th style={{ padding: '12px', textAlign: 'left' }}>操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                {records.filter(r => r.date.startsWith(selectedMonth)).map(r => (
-                  <tr key={r.id} style={{ borderBottom: '1px solid #eee' }}>
-                    <td data-label="日付" style={{ padding: '12px' }}>{r.date}</td>
-                    <td data-label="人物" style={{ padding: '12px' }}>{r.personName}</td>
-                    <td data-label="現場名" style={{ padding: '12px' }}>{r.project?.name ?? '(不明)'}</td>
-                    <td data-label="操作" style={{ padding: '12px' }}>
-                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                        <button onClick={() => { handleEdit(r); }} className="btn btn-info" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>修正</button>
-                        <button onClick={() => { 
-                          const targetId = r.id;
-                          if (targetId !== undefined) {
-                            void handleDelete(targetId);
-                          }
-                        }} className="btn btn-danger" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>削除</button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {records.filter(r => r.date.startsWith(selectedMonth)).map(r => {
+              const isExpanded = r.id === expandedRecordId;
+              // 日付から曜日を取得するヘルパー関数
+              const getDayOfWeek = (dateStr: string) => {
+                const days = ['日', '月', '火', '水', '木', '金', '土'];
+                const d = new Date(dateStr);
+                return isNaN(d.getTime()) ? '' : `(${days[d.getDay()]})`;
+              };
+
+              return (
+                <div 
+                  key={r.id} 
+                  className="card" 
+                  style={{ 
+                    padding: '0', 
+                    marginBottom: '0',
+                    border: '1px solid #e0e0e0',
+                    overflow: 'hidden',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  {/* ヘッダー部分（常に表示、クリックで開閉） */}
+                  <div 
+                    onClick={() => { if (r.id !== undefined) setExpandedRecordId(isExpanded ? null : r.id); }}
+                    style={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center', 
+                      padding: '12px 16px', 
+                      cursor: 'pointer',
+                      backgroundColor: isExpanded ? '#f8f9fa' : 'white',
+                      userSelect: 'none'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                      <span style={{ fontWeight: 'bold', color: '#495057' }}>
+                        {r.date.slice(5).replace('-', '/')} {getDayOfWeek(r.date)}
+                      </span>
+                      <span style={{ color: '#212529', fontWeight: 500 }}>
+                        {r.project?.name ?? '(不明)'}
+                      </span>
+                    </div>
+                    <span style={{ fontSize: '0.85rem', color: '#007bff', fontWeight: 'bold' }}>
+                      {isExpanded ? '▲ 閉じる' : '▼ 詳細'}
+                    </span>
+                  </div>
+
+                  {/* 詳細部分（展開時のみ表示） */}
+                  {isExpanded && (
+                    <div style={{ 
+                      padding: '16px', 
+                      borderTop: '1px solid #eee', 
+                      backgroundColor: '#fff',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '12px',
+                      fontSize: '0.9rem'
+                    }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <div>
+                          <strong style={{ color: '#6c757d', marginRight: '8px' }}>人物:</strong>
+                          <span>{r.personName}</span>
+                        </div>
+                        {r.summary ? (
+                          <div>
+                            <strong style={{ color: '#6c757d', marginRight: '8px' }}>備考:</strong>
+                            <span style={{ whiteSpace: 'pre-wrap' }}>{r.summary}</span>
+                          </div>
+                        ) : (
+                          <div style={{ color: '#adb5bd', fontStyle: 'italic' }}>
+                            備考はありません
+                          </div>
+                        )}
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+                      {/* 操作ボタン */}
+                      <div style={{ 
+                        display: 'flex', 
+                        gap: '8px', 
+                        justifyContent: 'flex-end', 
+                        borderTop: '1px solid #f1f3f5',
+                        paddingTop: '12px',
+                        marginTop: '4px'
+                      }}>
+                        <button 
+                          onClick={() => { handleEdit(r); }} 
+                          className="btn btn-info" 
+                          style={{ padding: '6px 16px', fontSize: '0.8rem', width: 'auto' }}
+                        >
+                          修正する
+                        </button>
+                        <button 
+                          onClick={() => { 
+                            const targetId = r.id;
+                            if (targetId !== undefined) {
+                              void handleDelete(targetId);
+                            }
+                          }} 
+                          className="btn btn-danger" 
+                          style={{ padding: '6px 16px', fontSize: '0.8rem', width: 'auto' }}
+                        >
+                          削除する
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </main>

@@ -7,7 +7,6 @@ const DB_VERSION = 1;
 export interface Project {
   id?: number;
   name: string;
-  location: string;
   status: string;
   createdAt: string;
   isDeleted?: boolean;

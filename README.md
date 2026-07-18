@@ -1,73 +1,84 @@
-# React + TypeScript + Vite
+# 日報記録アプリ (daily-genba)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+ブラウザ上で簡単・スマートに毎日の現場日報を記録し、CSV出力できるアプリです。
+TypeScript + React + Vite を使用して開発されています。
+データはインターネット上のサーバーではなく、お使いのブラウザ内部（IndexedDB）に安全に保存されます。
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 📅 主な機能
 
-## React Compiler
+1. **スマートな人物名管理**
+   - 初回入力時に名前を登録すると、ブラウザが記憶（LocalStorage）します。
+   - 画面上部の「人物名」ヘッダーからいつでも名前の変更・確定が可能です。
+   - 普段は折りたたまれて1行のコンパクトな表示になり、画面を広く使えます。
+   
+2. **直感的な日付操作**
+   - カレンダーからの日付選択はもちろん、「最終翌日」ボタンを押すことで、すでに記入されている日報の最終日（一番新しい日）の翌日へ1タップで切り替えられます。これにより、日報のまとめ入力が非常にスムーズに行えます。
+   - 「◀」「▶」ボタンを使うことで、前後の日に素早く切り替えられます。
+   - 日報を保存すると、次の日の入力がスムーズに行えるよう、日付が自動的に1日進みます。
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+3. **現場（プロジェクト）の管理**
+   - 画面上部の「現場設定」ボタンから、よく行く現場名を追加・編集・削除できます。
+   - 登録した現場は、日報入力時のリストから選択できるようになります。
 
-## Expanding the ESLint configuration
+4. **備考・連絡事項の折りたたみ**
+   - 特記事項や連絡事項がある場合のみ展開して入力できます（アコーディオン形式）。
+   - 内容が入力されている場合は自動的に展開され、保存後は自動で折りたたまれます。
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+5. **月ごとの記録一覧とCSV出力**
+   - 月ごとに登録された日報をアコーディオン（折りたたみ）形式のカードリストで一覧表示します。普段は日付と現場名だけが並ぶスッキリした画面になり、タップすることで人物名や備考の詳細確認、および修正・削除の操作が行えます。
+   - 「CSV出力」ボタンを押すと、その月のすべての日付（未入力の日も含む）が整理されたCSVファイルとしてダウンロードできます。
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+---
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## 🛠️ 使い方
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+### 1. 人物名の登録（初回のみ）
+- 画面上部の「人物名」欄を展開し、あなたの名前を入力して「確定」を押します。
+- 一度登録すると、次回以降は自動でその名前がセットされ、入力欄は折りたたまれて非表示になります。名前を変更したい場合は「変更する（折りたたみ中）」をクリックしてください。
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 2. 日報の入力と保存
+- 日付を選択します。
+- リストから「今日の現場」を選択します。
+- 必要に応じて「備考・連絡事項」を展開し、特記事項を入力します。
+- 「記録を保存」ボタンを押すと、下部の一覧に追加されます。
+- 保存されると、日付が自動的に翌日に進みます。
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### 3. 記録の修正・削除
+- 下部の一覧テーブルから、修正したい日報の「修正」ボタンを押すと、入力欄にその内容が読み込まれます。
+- 修正が完了したら「更新を保存」、中止する場合は「中止」を押します。
+- 不要な記録は「削除」ボタンで消去できます。
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+### 4. データの出力
+- 画面上部の月選択リストから出力したい月を選び、「CSV出力」ボタンを押すと、`daily_report_年-月.csv` がダウンロードされます。
+
+⚠️ **注意点**: データはお使いのブラウザに保存されているため、ブラウザのキャッシュ削除や履歴の全削除を行うと、記録が消えてしまう場合があります。定期的に「CSV出力」を行ってバックアップを取ることをお勧めします。
+
+---
+
+## 💻 開発者向け情報（起動方法）
+
+このプロジェクトをローカル環境で動かすための手順です。
+
+### 必要な環境
+- Node.js (推奨バージョン: v18以上)
+
+### 手順
+
+1. **パッケージのインストール**
+   ```bash
+   npm install
+   ```
+
+2. **開発用サーバーの起動**
+   ```bash
+   npm run dev
+   ```
+   起動後、ターミナルに表示されるURL（例: `http://localhost:5173/`）にブラウザでアクセスします。
+
+3. **本番用ファイルのビルド（書き出し）**
+   ```bash
+   npm run build
+   ```
+   実行すると、公開用のファイルが `dist/` フォルダに出力されます。
